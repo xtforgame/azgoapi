@@ -1,0 +1,19 @@
+go env | grep GOCACHE
+
+export GO111MODULE=on
+
+go mod vendor
+
+# go fmt ./...&&go test ./... -v -mod=vendor
+
+go fmt ./...&&go test ./tests/... -v -mod=vendor
+
+go clean -cache
+GOOS=js GOARCH=wasm go build -v -mod=vendor -o build/main.wasm main/wasm_01.go
+
+
+go fmt ./...&&go run -v -mod=vendor main/basicws_server.go
+go fmt ./...&&go run -v -mod=vendor main/basicws_client.go
+
+bash ./docker/bin/build_basicws_server.sh
+bash ./docker/alpine3.9/build_basicws_server.sh
