@@ -1,0 +1,18 @@
+version: '3'
+services:
+  azgoapi:
+    image: xtforgame/azgoapi:0.1
+    build:
+      context: https://github.com/xtforgame/azgoapi.git#:dist/alpine3.9
+      dockerfile: ./Dockerfile
+
+    container_name: azgoapi
+
+    # environment:
+    #   XXXXX: "yes"
+
+    ports:
+      - "8080:8080"
+
+    volumes:
+      - "./runtime:/usr/azgoapi/runtime"
