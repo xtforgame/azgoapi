@@ -8,10 +8,12 @@ package agapiserver
 import (
 	// "bytes"
 	// "encoding/json"
-	"fmt"
+	// "fmt"
 	"github.com/go-chi/chi"
 	// funk "github.com/thoas/go-funk"
-	"github.com/xtforgame/azgoapi/gbcore"
+	"github.com/xtforgame/agak/gbcore"
+	"github.com/xtforgame/agak/scheduler"
+	"github.com/xtforgame/agak/serverutils"
 	"net/http"
 	// "sort"
 	"encoding/json"
@@ -19,33 +21,14 @@ import (
 	"github.com/xtforgame/cmdraida/crcore"
 	// "github.com/xtforgame/cmdraida/t1"
 	"os"
-	"strings"
+	// "strings"
 )
-
-// FileServer conveniently sets up a http.FileServer handler to serve
-// static files from a http.FileSystem.
-func FileServer(r chi.Router, path string, root http.FileSystem) {
-	if strings.ContainsAny(path, "{}*") {
-		panic("FileServer does not permit URL parameters.")
-	}
-
-	fs := http.StripPrefix(path, http.FileServer(root))
-	fmt.Println("path :", path)
-	if path != "/" && path[len(path)-1] != '/' {
-		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
-		path += "/"
-	}
-	path += "*"
-
-	r.Get(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fs.ServeHTTP(w, r)
-	}))
-}
 
 type HttpServer struct {
 	server      *http.Server
 	router      *chi.Mux
 	taskManager *crbasic.TaskManagerBase
+	scheduler   *scheduler.Scheduler
 }
 
 func NewHttpServer() *HttpServer {
@@ -61,14 +44,15 @@ func NewHttpServer() *HttpServer {
 
 var runtimeFolder = "./runtime"
 
-func (hs *HttpServer) Init() {
+func (hs *HttpServer) Init(scheduler *scheduler.Scheduler) {
 	os.RemoveAll(runtimeFolder)
 	os.MkdirAll(runtimeFolder, os.ModePerm)
 	hs.taskManager = crbasic.NewTaskManager(runtimeFolder, gbcore.NewReporterT1)
 	hs.taskManager.Init()
+	hs.scheduler = scheduler
 
 	// hs.router.FileServer("/", http.Dir("web/"))
-	// FileServer(hs.router, "/assets", http.Dir("./assets"))
+	// serverutils.FileServer(hs.router, "/assets", http.Dir("./assets"))
 	hs.router.HandleFunc("/echo", TestHandleWebsocket)
 	hs.router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		task := hs.taskManager.RunTask(crcore.CommandType{
@@ -122,5 +106,5 @@ func (hs *HttpServer) Init() {
 }
 
 func (hs *HttpServer) Start() {
-	RunAndWaitGracefulShutdown(hs.server)
+	serverutils.RunAndWaitGracefulShutdown(hs.server)
 }

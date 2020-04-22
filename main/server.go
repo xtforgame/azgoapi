@@ -1,15 +1,16 @@
 package main
 
 import (
-	"github.com/xtforgame/azgoapi/agapiserver"
-	"github.com/xtforgame/azgoapi/utils"
+	// "fmt"
+	"github.com/xtforgame/agak/utils"
+	"github.com/xtforgame/azgoapi/mainhelpers"
 )
 
 func main() {
 	defer utils.FinalReport()
+	ms := mainhelpers.NewSbMainServiceForProd()
+	ms.Init()
+	ms.Start()
+	defer ms.Destroy()
 	// os.Exit(0)
-
-	hs := agapiserver.NewHttpServer()
-	hs.Init()
-	hs.Start()
 }
