@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi"
 	// funk "github.com/thoas/go-funk"
 	"github.com/xtforgame/agak/gbcore"
+	"github.com/xtforgame/agak/requestsender"
 	"github.com/xtforgame/agak/scheduler"
 	"github.com/xtforgame/agak/serverutils"
 	"net/http"
@@ -28,6 +29,7 @@ type HttpServer struct {
 	server      *http.Server
 	router      *chi.Mux
 	taskManager *crbasic.TaskManagerBase
+	reqSender   *requestsender.RequestSender
 	scheduler   *scheduler.Scheduler
 }
 
@@ -44,11 +46,15 @@ func NewHttpServer() *HttpServer {
 
 var runtimeFolder = "./runtime"
 
-func (hs *HttpServer) Init(scheduler *scheduler.Scheduler) {
+func (hs *HttpServer) Init(
+	reqSender *requestsender.RequestSender,
+	scheduler *scheduler.Scheduler,
+) {
 	os.RemoveAll(runtimeFolder)
 	os.MkdirAll(runtimeFolder, os.ModePerm)
 	hs.taskManager = crbasic.NewTaskManager(runtimeFolder, gbcore.NewReporterT1)
 	hs.taskManager.Init()
+	hs.reqSender = reqSender
 	hs.scheduler = scheduler
 
 	// hs.router.FileServer("/", http.Dir("web/"))
@@ -103,6 +109,7 @@ func (hs *HttpServer) Init(scheduler *scheduler.Scheduler) {
 		}
 		w.Write([]byte("[]"))
 	})
+	AddJobRouter(hs.router, hs.reqSender, hs.scheduler)
 }
 
 func (hs *HttpServer) Start() {

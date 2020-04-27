@@ -71,7 +71,7 @@ func (ms *SbMainService) GetReqSender() *requestsender.RequestSender {
 
 func (ms *SbMainService) Init() {
 	ms.mainScheduler.Init()
-	ms.httpServer.Init(ms.mainScheduler)
+	ms.httpServer.Init(ms.reqSender, ms.mainScheduler)
 }
 
 func (ms *SbMainService) Destroy() {
@@ -245,17 +245,12 @@ func (ms *SbMainService) Start() {
 
 		ms.RegisterAllJobs()
 
-		// ms.tryUpgrade()
-		// ms.tryRemoveLegacyData()
 	}()
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		ms.httpServer.Start()
 	}()
-	// if simulationMode {
-	// 	ms.liveTradeMain(&wg)
-	// }
 	wg.Wait()
 }
 
